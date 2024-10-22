@@ -17,11 +17,8 @@ public class Product {
 	private Integer id;
 	private String nome;
 	private String preco;
-	private String descriçao;
-	
-	@ManyToOne //muitos prosutos podem ter uma categoria
-	@JoinColumn(name = "categoria_id")
-	private Category categoria;
+	private String descricao;
+	private Integer categoria;
 	private String marca;
 	private String imagem;
 	private Integer quantidade;
@@ -29,12 +26,12 @@ public class Product {
 	@Column(columnDefinition = "TEXT")  // Especifica que o tipo no banco de dados é TEXT
 	private String detalhes;
 
-	public Product(Integer id, String nome, String preco, String descriçao, Category categoria, String marca, String imagem, Integer quantidade, String detalhes) {
+	public Product(Integer id, String nome, String preco, String descricao, Integer categoria, String marca, String imagem, Integer quantidade, String detalhes) {
 
 		this.id = id;
 		this.nome = nome;
 		this.preco = preco;
-		this.descriçao = descriçao;
+		this.descricao = descricao;
 		this.categoria = categoria;
 		this.marca = marca;
 		this.imagem = imagem;
@@ -66,19 +63,19 @@ public class Product {
 		this.preco = preco;
 	}
 
-	public String getDescriçao() {
-		return descriçao;
+	public String getDescricao() {
+		return descricao;
 	}
 
-	public void setDescriçao(String descriçao) {
-		this.descriçao = descriçao;
+	public void setDescricao(String descricao) {
+		this.descricao = descricao;
 	}
 
-	public Category getCategoria() {
+	public Integer getCategoria() {
 		return categoria;
 	}
 
-	public void setCategoria(Category categoria) {
+	public void setCategoria(Integer categoria) {
 		this.categoria = categoria;
 	}
 
