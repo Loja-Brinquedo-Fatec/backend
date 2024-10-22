@@ -60,19 +60,29 @@ public class ProductController {
 	}
 	
 	@PostMapping("/register")
-	public String insert(@RequestPart Product product, @RequestParam("imagem") MultipartFile image) {
+	public String insert(@RequestBody Product product, @RequestParam("imagem") MultipartFile image) {
 		
         if (image.isEmpty()) {
             return "A imagem é obrigatória";
         }
         
-        File directory = new File(UPLOAD_DIR);
-        
-        if (!directory.exists()) 
-        	if (!directory.mkdirs()) return "Erro ao criar arquivo de upload.";  
-        
-        //salvando imagem
         try {
+        
+	        File directory = new File(UPLOAD_DIR);
+	        
+	        if (!directory.exists()) 
+	        	if (!directory.mkdirs()) return "Erro ao criar arquivo de upload.";  
+	        
+	        String extension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
+	        
+	        // Verificando se a extensão é válida
+	        if (!extension.equalsIgnoreCase(".png") && 
+	            !extension.equalsIgnoreCase(".jpg") && 
+	            !extension.equalsIgnoreCase(".jpeg")) {
+	            return "Erro: Tipo de imagem inválido. Aceitos: .png, .jpg, .jpeg.";
+	        }
+	        
+	        //salvando imagem
         	
 	        byte[] bytes = image.getBytes();//recupeando o tamanho dela..
 	        String imageName = UUID.randomUUID() + ".jpeg";
@@ -103,7 +113,7 @@ public class ProductController {
 	public String update(@RequestParam("imagem") MultipartFile image, 
 	                     @RequestParam("nome") String nome, 
 	                     @RequestParam("descricao") String descricao, 
-	                     @RequestParam("preco") String preco,
+	                     @RequestParam("preco") float preco,
 	                     @RequestParam("categoria") Integer idCategoria,
 	                     @RequestParam("marca") String marca,
 	                     @RequestParam("quantidade") Integer quantidade,

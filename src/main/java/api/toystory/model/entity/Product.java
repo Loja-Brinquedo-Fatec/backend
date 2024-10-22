@@ -16,7 +16,7 @@ public class Product {
 	@Id @GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Integer id;
 	private String nome;
-	private String preco;
+	private float preco;
 	private String descricao;
 	private Integer categoria;
 	private String marca;
@@ -26,7 +26,7 @@ public class Product {
 	@Column(columnDefinition = "TEXT")  // Especifica que o tipo no banco de dados é TEXT
 	private String detalhes;
 
-	public Product(Integer id, String nome, String preco, String descricao, Integer categoria, String marca, String imagem, Integer quantidade, String detalhes) {
+	public Product(Integer id, String nome, float preco, String descricao, Integer categoria, String marca, String imagem, Integer quantidade, String detalhes) {
 
 		this.id = id;
 		this.nome = nome;
@@ -55,11 +55,11 @@ public class Product {
 		this.nome = nome;
 	}
 
-	public String getPreco() {
+	public float getPreco() {
 		return preco;
 	}
 
-	public void setPreco(String preco) {
+	public void setPreco(float preco) {
 		this.preco = preco;
 	}
 
