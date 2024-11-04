@@ -18,7 +18,11 @@ public class Category {
 	
 	@Column(columnDefinition = "TEXT")
 	private String descricao;
-
+	
+	public Category() {
+		
+	}
+	
 	public Category(Integer id, String nome, String descricao) {
 
 		this.id = id;

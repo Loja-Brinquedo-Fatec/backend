@@ -2,18 +2,23 @@ package api.toystory.controller;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale.Category;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -21,15 +26,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import api.toystory.dto.response.WrapperResponseDTO;
 import api.toystory.model.entity.Product;
 import api.toystory.model.repository.ProductRepository;
 
 @RestController
-@RequestMapping("/product")
+@RequestMapping(value = "/product", produces = MediaType.TEXT_PLAIN_VALUE)
+@CrossOrigin(origins = "*")  // Libera o CORS para este controlador
 public class ProductController {
 	
 	@Autowired
@@ -51,121 +61,133 @@ public class ProductController {
 	}
 	
 	@DeleteMapping("/delete/{id}")
-	public String delete(@PathVariable("id") Integer id) {
+	public boolean delete(@PathVariable("id") Integer id) {
+		
+		if(!repo.existsById(id)) return false;
 		
 		repo.deleteById(id);
 		
-		return "Produto deletado!";
+		return true;
 		
 	}
 	
-	@PostMapping("/register")
-	public String insert(@RequestBody Product product, @RequestParam("imagem") MultipartFile image) {
-		
-        if (image.isEmpty()) {
-            return "A imagem é obrigatória";
-        }
-        
-        try {
-        
-	        File directory = new File(UPLOAD_DIR);
-	        
-	        if (!directory.exists()) 
-	        	if (!directory.mkdirs()) return "Erro ao criar arquivo de upload.";  
-	        
-	        String extension = image.getOriginalFilename().substring(image.getOriginalFilename().lastIndexOf("."));
-	        
-	        // Verificando se a extensão é válida
-	        if (!extension.equalsIgnoreCase(".png") && 
-	            !extension.equalsIgnoreCase(".jpg") && 
-	            !extension.equalsIgnoreCase(".jpeg")) {
-	            return "Erro: Tipo de imagem inválido. Aceitos: .png, .jpg, .jpeg.";
+	@PostMapping(value = "/register", consumes = {"multipart/form-data"}, produces = "application/json")
+	@ResponseBody
+	public WrapperResponseDTO<Product> insert(
+	        @RequestParam String nome,
+	        @RequestParam String descricao,
+	        @RequestParam Integer quantidade,
+	        @RequestParam String detalhes,
+	        @RequestParam String marca,
+	        @RequestParam BigDecimal preco,
+	        @RequestParam String categoria,
+	        @RequestParam(required = false) MultipartFile imagem) {
+
+	    try {
+	        // Verifica se a imagem foi fornecida
+	        if (imagem == null || imagem.isEmpty()) {
+	            return new WrapperResponseDTO<>(false, "Imagem é obrigatória.", null);
 	        }
-	        
-	        //salvando imagem
-        	
-	        byte[] bytes = image.getBytes();//recupeando o tamanho dela..
-	        String imageName = UUID.randomUUID() + ".jpeg";
-	        Path path = Paths.get(UPLOAD_DIR + imageName);//criando o caminho completo dela com o nome dela
-	        Files.write(path, bytes);//escrendo no servidor..
-			
+
+	        // Cria o diretório de upload caso ele não exista
+	        File directory = new File(UPLOAD_DIR);
+	        if (!directory.exists() && !directory.mkdirs()) {
+	            return new WrapperResponseDTO<>(false, "Erro ao criar diretório de upload.", null);
+	        }
+
+	        // Valida o tipo da imagem
+	        String extension = imagem.getOriginalFilename().substring(imagem.getOriginalFilename().lastIndexOf("."));
+	        if (!extension.equalsIgnoreCase(".png") &&
+	            !extension.equalsIgnoreCase(".jpg") &&
+	            !extension.equalsIgnoreCase(".jpeg")) {
+
+	            return new WrapperResponseDTO<>(false, "Erro: Tipo de imagem inválido. Aceitos: .png, .jpg, .jpeg.", null);
+	        }
+
+	        // Salva a imagem
+	        byte[] bytes = imagem.getBytes();
+	        String imageName = UUID.randomUUID() + extension;
+	        Path path = Paths.get(UPLOAD_DIR + "/" + imageName);
+	        Files.write(path, bytes);
+
+	        // Constrói a URL da imagem
 	        String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
 	                .path("/images/")
 	                .path(imageName)
 	                .toUriString();
-	        
+
+	        // Cria e salva o objeto Product
+	        Product product = new Product();
+	        product.setNome(nome);
+	        product.setDescricao(descricao);
+	        product.setQuantidade(quantidade);
+	        product.setDetalhes(detalhes);
+	        product.setMarca(marca);
+	        product.setPreco(preco);
+	        product.setCategoria(categoria);
 	        product.setImagem(imageUrl);
-	        
-        }catch(Exception ex) {
-        	
-        	ex.printStackTrace();
-        	return ex.toString();
-        	
+
+	        repo.save(product);
+
+	        return new WrapperResponseDTO<>(true, "Produto registrado.", product);
+
+	    } catch (Exception ex) {
+	        ex.printStackTrace();
+	        return new WrapperResponseDTO<>(false, "Erro interno: " + ex.getMessage(), null);
+	    }
+	}
+
+	@PutMapping(value = "/edit/{id}", consumes = {"multipart/form-data"}, produces = "application/json")
+	@ResponseBody
+    public WrapperResponseDTO<Product> updateProduct(
+            @PathVariable Integer id,
+            @RequestParam String nome,
+            @RequestParam String descricao,
+            @RequestParam Integer quantidade,
+            @RequestParam String detalhes,
+            @RequestParam String marca,
+            @RequestParam BigDecimal preco,
+            @RequestParam String categoria,
+            @RequestParam(required = false) MultipartFile imagem) {
+
+        Optional<Product> productOptional = repo.findById(id);
+        
+        if (productOptional.isEmpty()) {
+        	return new WrapperResponseDTO<Product>(false,"Produto não encontrado.", null);
         }
 
-		repo.save(product);
-		
-		return "Produto foi registrado!";
-		
-	}
+        Product product = productOptional.get();
+        product.setNome(nome);
+        product.setDescricao(descricao);
+        product.setQuantidade(quantidade);
+        product.setDetalhes(detalhes);
+        product.setMarca(marca);
+        product.setPreco(preco);
+        product.setCategoria(categoria);
+
+        // Processa o upload de imagem se um arquivo de imagem for enviado
+        if (imagem != null && !imagem.isEmpty()) {
+            String randomFileName = UUID.randomUUID().toString() + "_" + imagem.getOriginalFilename();
+            Path filePath = Paths.get(UPLOAD_DIR, randomFileName);
+
+            try {
+                // Cria o diretório de upload, se necessário
+                Files.createDirectories(filePath.getParent());
+                // Salva a imagem no diretório especificado
+                Files.write(filePath, imagem.getBytes());
+
+                // Atualiza o caminho da imagem no produto
+                product.setImagem(randomFileName);
+
+            } catch (IOException e) {
+            	return new WrapperResponseDTO<Product>(false,e.toString(), null);
+            }
+        }
+
+        // Salva o produto atualizado no repositório
+        Product updatedProduct = repo.save(product);
+        return new WrapperResponseDTO<Product>(true,"Produto foi atualizado com sucesso!", updatedProduct);
+    }
 	
-	@PutMapping("edit/{id}")
-	public String update(@RequestParam("imagem") MultipartFile image, 
-	                     @RequestParam("nome") String nome, 
-	                     @RequestParam("descricao") String descricao, 
-	                     @RequestParam("preco") float preco,
-	                     @RequestParam("categoria") Integer idCategoria,
-	                     @RequestParam("marca") String marca,
-	                     @RequestParam("quantidade") Integer quantidade,
-	                     @RequestParam("detalhes") String detalhes,
-	                     @PathVariable("id") Integer id) {
-	    
-	    // Recuperar o produto existente do banco de dados
-	    Product productUpdated = repo.findById(id).orElseThrow(() -> new RuntimeException("Produto não encontrado"));
-	    
-	    // Atualizar os campos do produto
-	    productUpdated.setNome(nome);
-	    productUpdated.setDescricao(descricao);
-	    productUpdated.setPreco(preco);
-	    productUpdated.setCategoria(idCategoria);
-	    productUpdated.setMarca(marca);
-	    productUpdated.setQuantidade(quantidade);
-	    productUpdated.setDetalhes(detalhes);
-	    
-	    // Se uma nova imagem for enviada, processar e atualizar a URL
-	    if (image != null && !image.isEmpty()) {
-	        // Salvar a nova imagem
-	        try {
-	            // Gerar um nome único para a imagem
-	            String originalFileName = image.getOriginalFilename();
-	            String extension = "";
-
-	            if (originalFileName != null && originalFileName.contains(".")) {
-	                extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-	            }
-
-	            String imageName = UUID.randomUUID().toString() + extension;
-	            Path path = Paths.get(UPLOAD_DIR, imageName);
-	            Files.write(path, image.getBytes());
-	            
-	            // Atualizar a URL da imagem no produto
-	            String imageUrl = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                    .path("/images/")
-	                    .path(imageName)
-	                    .toUriString();
-	            productUpdated.setImagem(imageUrl); // Atualiza o campo de imagem do produto
-	            
-	        } catch (IOException ex) {
-	            ex.printStackTrace();
-	            return "Erro ao salvar a imagem: " + ex.getMessage();
-	        }
-	    }
-
-	    // Salvar as alterações no banco de dados
-	    repo.save(productUpdated);
-	    
-	    return "Produto atualizado com sucesso!";
-	}
-
 	
 }

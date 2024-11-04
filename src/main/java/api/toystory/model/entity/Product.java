@@ -1,42 +1,59 @@
 package api.toystory.model.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
 
 @Entity
-@Table(name="product")
 public class Product {
-	
-	@Id @GeneratedValue(strategy=GenerationType.IDENTITY)
-	private Integer id;
-	private String nome;
-	private float preco;
-	private String descricao;
-	private Integer categoria;
-	private String marca;
-	private String imagem;
-	private Integer quantidade;
-	
-	@Column(columnDefinition = "TEXT")  // Especifica que o tipo no banco de dados é TEXT
-	private String detalhes;
 
-	public Product(Integer id, String nome, float preco, String descricao, Integer categoria, String marca, String imagem, Integer quantidade, String detalhes) {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
+    @Column(nullable = false)
+    private String nome;
+
+    @Column(nullable = false)
+    private String descricao;
+    
+    @Column(nullable = false)
+    private Integer quantidade;
+    
+    @Column(nullable = false)
+    private String detalhes;
+    
+    @Column(nullable = false)
+    private String marca;
+
+    @Column(nullable = false)
+    private BigDecimal preco;
+
+    @Column(nullable = false)
+    private String categoria;
+
+    private String imagem;
+
+    // Construtor padrão
+    public Product() {
+    }
+
+	public Product(Integer id, String nome, String descricao, Integer quantidade, String detalhes, String marca,
+			BigDecimal preco, String categoria, String imagem) {
+		super();
 		this.id = id;
 		this.nome = nome;
-		this.preco = preco;
 		this.descricao = descricao;
-		this.categoria = categoria;
-		this.marca = marca;
-		this.imagem = imagem;
 		this.quantidade = quantidade;
 		this.detalhes = detalhes;
+		this.marca = marca;
+		this.preco = preco;
+		this.categoria = categoria;
+		this.imagem = imagem;
 	}
 
 	public Integer getId() {
@@ -55,44 +72,12 @@ public class Product {
 		this.nome = nome;
 	}
 
-	public float getPreco() {
-		return preco;
-	}
-
-	public void setPreco(float preco) {
-		this.preco = preco;
-	}
-
 	public String getDescricao() {
 		return descricao;
 	}
 
 	public void setDescricao(String descricao) {
 		this.descricao = descricao;
-	}
-
-	public Integer getCategoria() {
-		return categoria;
-	}
-
-	public void setCategoria(Integer categoria) {
-		this.categoria = categoria;
-	}
-
-	public String getMarca() {
-		return marca;
-	}
-
-	public void setMarca(String marca) {
-		this.marca = marca;
-	}
-
-	public String getImagem() {
-		return imagem;
-	}
-
-	public void setImagem(String imagem) {
-		this.imagem = imagem;
 	}
 
 	public Integer getQuantidade() {
@@ -110,7 +95,43 @@ public class Product {
 	public void setDetalhes(String detalhes) {
 		this.detalhes = detalhes;
 	}
+
+	public String getMarca() {
+		return marca;
+	}
+
+	public void setMarca(String marca) {
+		this.marca = marca;
+	}
+
+	public BigDecimal getPreco() {
+		return preco;
+	}
+
+	public void setPreco(BigDecimal preco) {
+		this.preco = preco;
+	}
+
+
+	public String getImagem() {
+		return imagem;
+	}
+
+	public void setImagem(String imagem) {
+		this.imagem = imagem;
+	}
+
+	public String getCategoria() {
+		return categoria;
+	}
+
+	public void setCategoria(String categoria) {
+		this.categoria = categoria;
+	}
+
 	
 	
 	
+
+    
 }
