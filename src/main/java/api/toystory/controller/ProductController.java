@@ -38,7 +38,7 @@ import api.toystory.model.entity.Product;
 import api.toystory.model.repository.ProductRepository;
 
 @RestController
-@RequestMapping(value = "/product", produces = MediaType.TEXT_PLAIN_VALUE)
+@RequestMapping(value = "/product")
 @CrossOrigin(origins = "*")  // Libera o CORS para este controlador
 public class ProductController {
 	
@@ -48,8 +48,9 @@ public class ProductController {
 	private static String UPLOAD_DIR = "E:/programas/laragon/www/toystory-backend/src/main/resources/static/images";
 	
 	@GetMapping("/")
+	@ResponseBody
 	public List<Product> listAll() {
-		return repo.findAll();
+	    return repo.findAll();
 	}
 	
 	@GetMapping("/{id}")
